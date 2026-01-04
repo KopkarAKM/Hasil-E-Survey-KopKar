@@ -7,113 +7,148 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap');
-        body { font-family: 'Inter', sans-serif; background-color: #f1f5f9; }
-        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 4px; }
     </style>
 </head>
-<body class="pb-20">
+<body class="pb-20 text-slate-800">
 
-    <nav class="bg-slate-900 text-white p-4 sticky top-0 z-50 shadow-md">
-        <div class="max-w-7xl mx-auto flex justify-between items-center">
-            <div class="flex items-center gap-3">
-                <div class="bg-white p-1 rounded h-8 w-8 flex items-center justify-center">
-                    <img src="https://i.ibb.co.com/WvTwLMn5/image-1.png" alt="Logo" class="h-full w-auto">
-                </div>
-                <h1 class="font-bold text-lg">Panel Kendali Kopkar AKM</h1>
+    <nav class="bg-white border-b border-slate-200 sticky top-0 z-50 px-6 py-4 flex justify-between items-center shadow-sm">
+        <div class="flex items-center gap-3">
+            <img src="https://i.ibb.co.com/WvTwLMn5/image-1.png" alt="Logo" class="h-10 w-auto">
+            <div>
+                <h1 class="font-black text-xl text-slate-900 tracking-tight">EXECUTIVE PANEL</h1>
+                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Kopkar Adaro Karya Mandiri</p>
             </div>
-            <div class="flex gap-2">
-                <button onclick="loadAllData()" class="bg-emerald-600 hover:bg-emerald-700 px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2 transition">
-                    <i data-lucide="refresh-cw" class="w-4 h-4"></i> Segarkan
-                </button>
-            </div>
+        </div>
+        <div class="flex gap-3">
+            <button onclick="exportToExcel()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2 transition">
+                <i data-lucide="download" class="w-4 h-4"></i> Unduh Excel
+            </button>
+            <button onclick="loadAllData()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2 transition shadow-lg shadow-emerald-200">
+                <i data-lucide="refresh-cw" class="w-4 h-4"></i> Live Update
+            </button>
         </div>
     </nav>
 
-    <main class="max-w-7xl mx-auto p-4 md:p-6 space-y-6">
+    <main class="max-w-[90rem] mx-auto p-6 space-y-8">
         
-        <!-- Filter Bar -->
-        <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 flex flex-wrap gap-4 items-center">
-            <div class="flex items-center gap-2">
-                <i data-lucide="filter" class="w-4 h-4 text-slate-400"></i>
-                <span class="text-xs font-bold text-slate-500 uppercase">Filter:</span>
+        <!-- Baris 1: KPI & Summary -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+            <div class="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm">
+                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Total Responden</p>
+                <h3 class="text-4xl font-black text-slate-800" id="kpi-total">0</h3>
             </div>
-            <select id="filter-lokasi" onchange="applyFilters()" class="text-xs font-semibold p-2 rounded-lg border bg-slate-50 outline-none focus:ring-2 focus:ring-emerald-500">
-                <option value="Semua">Semua Lokasi</option>
-                <option>Kelanis</option><option>Dahai</option><option>KM 82</option><option>Office Wara 73</option>
-            </select>
-            <select id="filter-masa" onchange="applyFilters()" class="text-xs font-semibold p-2 rounded-lg border bg-slate-50 outline-none focus:ring-2 focus:ring-emerald-500">
-                <option value="Semua">Semua Masa Keanggotaan</option>
-                <option value="<1 th">&lt; 1 th</option>
-                <option value="1-5 th">1-5 th</option>
-                <option value=">5 th">&gt; 5 th</option>
-            </select>
-        </div>
 
-        <!-- Top Stats -->
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
-                <p class="text-xs font-bold text-slate-400 uppercase tracking-widest">Responden Aktif</p>
-                <h3 class="text-4xl font-black text-slate-900 mt-1" id="stat-count">-</h3>
+            <div class="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm">
+                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Indeks Kepuasan</p>
+                <h3 class="text-4xl font-black text-emerald-600" id="kpi-score">0%</h3>
+                <p class="text-xs text-emerald-600 font-bold mt-1" id="kpi-status">Menghitung...</p>
             </div>
-            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
-                <p class="text-xs font-bold text-slate-400 uppercase tracking-widest">Indeks Kepuasan</p>
-                <h3 class="text-4xl font-black text-emerald-600 mt-1" id="stat-avg">-%</h3>
-            </div>
-            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 md:col-span-2">
-                <p class="text-xs font-bold text-slate-400 uppercase tracking-widest">Status Strategis</p>
-                <div class="flex items-center gap-2 mt-2">
-                    <div id="status-dot" class="w-3 h-3 rounded-full bg-slate-200"></div>
-                    <span id="status-text" class="font-bold text-slate-700">Menganalisis data...</span>
+
+            <div class="bg-slate-900 text-white p-6 rounded-3xl shadow-xl relative overflow-hidden md:col-span-2 flex flex-col justify-center">
+                <div class="flex items-center gap-2 mb-3">
+                    <i data-lucide="brain-circuit" class="w-4 h-4 text-emerald-400"></i>
+                    <p class="text-[10px] font-bold text-emerald-400 uppercase tracking-widest">Analisis Sentimen & Teks (AI Lokal)</p>
+                </div>
+                <div id="executive-summary" class="text-sm text-slate-300 leading-relaxed font-medium">
+                    Sedang membaca dan menganalisis teks aspirasi anggota...
                 </div>
             </div>
         </div>
 
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <!-- Radar Chart -->
-            <div class="lg:col-span-2 bg-white p-6 rounded-3xl shadow-sm border border-slate-200 h-[450px] flex flex-col">
-                <h4 class="font-bold text-slate-800 mb-4 text-xs uppercase tracking-widest flex items-center gap-2">
-                    <i data-lucide="bar-chart-3" class="w-4 h-4"></i> Performa Berdasarkan Unit Bisnis
+        <!-- Baris 2: Analisis Kualitatif -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div class="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm flex flex-col h-64">
+                <h4 class="font-bold text-slate-800 text-xs uppercase tracking-widest mb-4 flex items-center gap-2">
+                    <i data-lucide="gift" class="w-4 h-4 text-blue-500"></i> Tren Produk Baru
                 </h4>
-                <div class="flex-1 relative">
-                    <canvas id="adminRadar"></canvas>
+                <div id="top-harapan" class="space-y-3 flex-1 overflow-y-auto custom-scrollbar pr-2">
+                    <p class="text-xs text-slate-400 italic">Menganalisis...</p>
                 </div>
             </div>
 
-            <!-- Priority Actions -->
-            <div class="bg-slate-900 text-white p-6 rounded-3xl shadow-xl flex flex-col h-[450px]">
-                <h4 class="font-bold text-emerald-400 mb-4 flex items-center gap-2 text-xs uppercase tracking-widest">
-                    <i data-lucide="list-checks" class="w-5 h-5"></i> Agenda Perbaikan (Skor < 3.5)
+            <div class="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm flex flex-col h-64">
+                <h4 class="font-bold text-slate-800 text-xs uppercase tracking-widest mb-4 flex items-center gap-2">
+                    <i data-lucide="alert-octagon" class="w-4 h-4 text-rose-500"></i> Isu Paling Sering Muncul
                 </h4>
-                <div id="action-list" class="space-y-3 overflow-y-auto pr-2 custom-scrollbar flex-1">
-                    <p class="text-slate-500 italic text-xs">Sedang menghitung prioritas...</p>
+                <div id="top-keluhan" class="space-y-3 flex-1 overflow-y-auto custom-scrollbar pr-2">
+                    <p class="text-xs text-slate-400 italic">Menganalisis...</p>
+                </div>
+            </div>
+
+            <div class="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm flex flex-col h-64">
+                <h4 class="font-bold text-slate-800 text-xs uppercase tracking-widest mb-4 flex items-center gap-2">
+                    <i data-lucide="trending-up" class="w-4 h-4 text-emerald-500"></i> Aspirasi SHU
+                </h4>
+                <div id="top-shu" class="space-y-3 flex-1 overflow-y-auto custom-scrollbar pr-2">
+                    <p class="text-xs text-slate-400 italic">Menganalisis...</p>
                 </div>
             </div>
         </div>
 
-        <!-- Feedback Deep Analysis -->
-        <div class="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
-            <div class="p-6 border-b border-slate-100 bg-slate-50 flex justify-between items-center">
-                <h4 class="font-bold text-slate-800 text-xs uppercase tracking-widest">Detail Aspirasi & Masukan Anggota</h4>
-                <div class="text-[10px] text-slate-400 font-bold px-2 py-1 bg-white rounded border uppercase">Live Updates</div>
+        <!-- Baris 3: Radar Chart -->
+        <div class="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm">
+            <div class="flex justify-between items-center mb-6">
+                <h4 class="font-bold text-slate-800 text-xs uppercase tracking-widest">Peta Kekuatan Unit Bisnis</h4>
+                <div class="flex gap-4 text-[10px] font-bold">
+                    <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-emerald-500"></span> Aman (>3.8)</span>
+                    <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-rose-500"></span> Bahaya (<3.5)</span>
+                </div>
             </div>
-            <div class="overflow-x-auto">
-                <table class="w-full text-left text-sm">
-                    <thead class="bg-white text-slate-400 border-b border-slate-100 uppercase text-[9px] font-black tracking-widest">
+            <div class="h-[300px] w-full flex justify-center">
+                <canvas id="radarChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Tabel Log Aspirasi Anggota (Updated) -->
+        <div class="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden flex flex-col">
+            <div class="p-6 bg-slate-50 border-b border-slate-100 flex justify-between items-center">
+                <div class="flex items-center gap-3">
+                    <div class="bg-white p-2 rounded-lg border border-slate-200 shadow-sm">
+                        <i data-lucide="table-2" class="w-4 h-4 text-slate-500"></i>
+                    </div>
+                    <div>
+                        <h4 class="font-bold text-slate-800 text-sm uppercase tracking-wide">Detail Aspirasi Anggota</h4>
+                        <p class="text-xs text-slate-400">Tampilan Lengkap Harapan & Saran</p>
+                    </div>
+                </div>
+                <div class="flex gap-2">
+                    <button onclick="prevPage()" id="btn-prev" class="px-3 py-1.5 rounded-lg border border-slate-200 text-xs font-bold text-slate-500 hover:bg-white disabled:opacity-50">Sebelumnya</button>
+                    <span id="page-indicator" class="px-3 py-1.5 rounded-lg bg-white border border-slate-200 text-xs font-bold text-slate-700 flex items-center">Hal 1</span>
+                    <button onclick="nextPage()" id="btn-next" class="px-3 py-1.5 rounded-lg border border-slate-200 text-xs font-bold text-slate-500 hover:bg-white disabled:opacity-50">Selanjutnya</button>
+                </div>
+            </div>
+            
+            <div class="overflow-x-auto custom-scrollbar">
+                <table class="w-full text-left text-sm whitespace-nowrap">
+                    <thead class="bg-white text-slate-400 text-[10px] font-bold uppercase tracking-wider sticky top-0 z-10 border-b border-slate-100">
                         <tr>
-                            <th class="p-4">Identitas</th>
-                            <th class="p-4">Skor</th>
-                            <th class="p-4">Harapan Produk Baru</th>
-                            <th class="p-4">Perbaikan Utama</th>
-                            <th class="p-4">Saran SHU</th>
+                            <th class="p-4 w-10 text-center">#</th>
+                            <th class="p-4 w-32">Identitas</th>
+                            <th class="p-4 w-20 text-center">Skor</th>
+                            <!-- Breakdown Unit -->
+                            <th class="p-4 w-16 text-center text-emerald-600">GCG</th>
+                            <th class="p-4 w-16 text-center text-blue-600">USP</th>
+                            <th class="p-4 w-16 text-center text-indigo-600">Travel</th>
+                            <th class="p-4 w-16 text-center text-orange-600">Ritel</th>
+                            <!-- Aspirasi Teks -->
+                            <th class="p-4 min-w-[250px] bg-blue-50/50 text-blue-800">Harapan Produk Baru</th>
+                            <th class="p-4 min-w-[250px] bg-rose-50/50 text-rose-800">Perbaikan Utama</th>
+                            <th class="p-4 min-w-[250px] bg-emerald-50/50 text-emerald-800">Saran SHU</th>
                         </tr>
                     </thead>
-                    <tbody id="table-body" class="divide-y divide-slate-50">
-                        <!-- Data rows -->
+                    <tbody id="table-body" class="divide-y divide-slate-50 text-slate-600">
+                        <!-- JS Injected -->
                     </tbody>
                 </table>
+            </div>
+            <div class="p-4 border-t border-slate-100 text-center text-xs text-slate-400" id="table-footer">
+                Menampilkan 10 data per halaman
             </div>
         </div>
 
@@ -121,9 +156,13 @@
 
     <script>
         const scriptURL = 'https://script.google.com/macros/s/AKfycbymG6R-RW5C9oDkCFPyrSbYLL1oHlp7GlgSjQxW6kQDs22XEPLCQPpV_PBk8uNo43iU6Q/exec';
-        let radarChart;
         let rawData = [];
-        let dataHeaders = [];
+        let radarChartInst = null;
+        
+        let currentPage = 1;
+        const rowsPerPage = 10;
+
+        const stopWords = ["dan", "yang", "di", "ke", "dari", "ini", "itu", "untuk", "pada", "adalah", "sebagai", "dengan", "tidak", "bisa", "akan", "atau", "karena", "jika", "tapi", "saya", "kami", "kita", "anda", "mereka", "ada", "oleh", "sudah", "lagi", "banyak", "lebih", "agar", "supaya", "tolong", "mohon", "kurang", "sangat", "perlu", "harus", "ingin", "mau", "minta", "tolong", "diperbaiki", "ditingkatkan", "koperasi", "kopkar", "akm", "adaro"];
 
         window.onload = () => {
             lucide.createIcons();
@@ -131,191 +170,208 @@
         };
 
         async function loadAllData() {
-            const statusText = document.getElementById('status-text');
             try {
                 const response = await fetch(`${scriptURL}?get=all&t=${Date.now()}`);
                 const result = await response.json();
                 
-                if (!result.data) throw new Error("Format data tidak valid");
-
-                dataHeaders = result.headers;
-                rawData = result.data;
+                if (!result.data) throw new Error("Data Kosong");
                 
-                applyFilters();
+                // Urutkan data terbaru di atas
+                rawData = result.data.reverse();
+                
+                renderKPI(rawData);
+                analyzeTextData(rawData);
+                renderCharts(rawData);
+                renderTable(); 
+
             } catch (e) {
                 console.error(e);
-                statusText.innerText = "Gagal memuat data dari Google Sheets";
-                statusText.className = "font-bold text-red-500";
+                alert("Gagal memuat data dashboard.");
             }
         }
 
-        function applyFilters() {
-            const locFilter = document.getElementById('filter-lokasi').value;
-            const masaFilter = document.getElementById('filter-masa').value;
-
-            // Mapping index berdasarkan backend (Timestamp=0, NIK=1, Nama=2, Lokasi=3, Masa=4)
-            const filtered = rawData.filter(r => {
-                const matchLoc = locFilter === "Semua" || r[3] === locFilter;
-                const matchMasa = masaFilter === "Semua" || r[4] === masaFilter;
-                return matchLoc && matchMasa;
-            }).reverse();
-
-            updateUI(filtered);
-        }
-
-        function updateUI(rows) {
-            updateStats(rows);
-            updateTable(rows);
-            updateCharts(rows);
-            generateActions(rows);
-        }
-
-        function updateStats(rows) {
-            if (rows.length === 0) {
-                document.getElementById('stat-count').innerText = "0";
-                document.getElementById('stat-avg').innerText = "0%";
-                return;
-            }
-
-            const scoreIdx = dataHeaders.indexOf("Skor_Total");
-            let total = 0;
-            rows.forEach(r => total += (parseFloat(r[scoreIdx]) || 0));
-            const avg = Math.round(total / rows.length);
-
-            document.getElementById('stat-count').innerText = rows.length;
-            document.getElementById('stat-avg').innerText = avg + "%";
-            
-            const statusText = document.getElementById('status-text');
-            const statusDot = document.getElementById('status-dot');
-            
-            if (avg >= 80) {
-                statusText.innerText = "Sangat Memuaskan";
-                statusText.className = "font-bold text-emerald-600";
-                statusDot.className = "w-3 h-3 rounded-full bg-emerald-500";
-            } else if (avg >= 60) {
-                statusText.innerText = "Kinerja Stabil (Perlu Pantauan)";
-                statusText.className = "font-bold text-amber-600";
-                statusDot.className = "w-3 h-3 rounded-full bg-amber-500";
-            } else {
-                statusText.innerText = "Tindakan Darurat Diperlukan";
-                statusText.className = "font-bold text-red-600";
-                statusDot.className = "w-3 h-3 rounded-full bg-red-500";
-            }
-        }
-
-        function updateTable(rows) {
+        // --- TABLE RENDER LOGIC ---
+        function renderTable() {
             const tbody = document.getElementById('table-body');
-            const scoreIdx = dataHeaders.indexOf("Skor_Total");
-            const harapanIdx = dataHeaders.indexOf("Harapan");
-            const perbaikanIdx = dataHeaders.indexOf("Perbaikan");
-            const shuIdx = dataHeaders.indexOf("Saran_SHU");
+            const startIndex = (currentPage - 1) * rowsPerPage;
+            const endIndex = startIndex + rowsPerPage;
+            const pageData = rawData.slice(startIndex, endIndex);
 
-            if (rows.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="5" class="p-10 text-center text-slate-400">Tidak ada data untuk filter ini</td></tr>`;
+            tbody.innerHTML = "";
+            if (pageData.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="10" class="p-8 text-center text-slate-400 italic">Data kosong.</td></tr>`;
                 return;
             }
 
-            tbody.innerHTML = rows.slice(0, 15).map(r => `
-                <tr class="hover:bg-slate-50 transition">
+            pageData.forEach((r, index) => {
+                // Index Mapping berdasarkan Backend Terbaru
+                // GCG: 6-11, USP: 12-17, TRV: 22-25, RET: 26-31
+                const scoreGCG = calcRowAvg(r, 6, 11);
+                const scoreUSP = calcRowAvg(r, 12, 17);
+                const scoreTRV = calcRowAvg(r, 22, 25);
+                const scoreRET = calcRowAvg(r, 26, 31);
+                
+                // Skor Total (Index 32)
+                const totalScore = Math.round(parseFloat(r[32]) || 0);
+                let badgeColor = totalScore >= 80 ? "bg-emerald-100 text-emerald-700" : (totalScore < 60 ? "bg-rose-100 text-rose-700" : "bg-slate-100 text-slate-600");
+
+                // Aspirasi Teks (Harapan: 33, Perbaikan: 34, SHU: 35)
+                const harapan = r[33] || "-";
+                const perbaikan = r[34] || "-";
+                const shu = r[35] || "-";
+
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-slate-50 transition border-b border-slate-50 last:border-none group";
+                tr.innerHTML = `
+                    <td class="p-4 text-center text-xs text-slate-400">${startIndex + index + 1}</td>
                     <td class="p-4">
-                        <div class="font-bold text-slate-800 leading-tight">${r[2] || 'Anonim'}</div>
-                        <div class="text-[10px] text-slate-400 font-mono">NIK: ${r[1] || '-'} • ${r[3]}</div>
+                        <div class="font-bold text-slate-800 text-xs">${r[2] || 'Anonim'}</div>
+                        <div class="text-[10px] text-slate-400">${r[1]}</div>
                     </td>
-                    <td class="p-4">
-                        <div class="px-2 py-1 rounded bg-slate-100 text-slate-700 font-black text-center text-xs w-12">${r[scoreIdx]}%</div>
+                    <td class="p-4 text-center">
+                        <span class="${badgeColor} px-2 py-1 rounded-lg text-xs font-black">${totalScore}%</span>
                     </td>
-                    <td class="p-4 text-xs text-slate-600 font-medium italic">${r[harapanIdx] || '-'}</td>
-                    <td class="p-4 text-xs text-red-600 font-bold">${r[perbaikanIdx] || '-'}</td>
-                    <td class="p-4 text-xs text-emerald-700 font-semibold">${r[shuIdx] || '-'}</td>
-                </tr>
+                    <td class="p-4 text-center text-xs font-bold text-emerald-600">${scoreGCG}</td>
+                    <td class="p-4 text-center text-xs font-bold text-blue-600">${scoreUSP}</td>
+                    <td class="p-4 text-center text-xs font-bold text-indigo-600">${scoreTRV}</td>
+                    <td class="p-4 text-center text-xs font-bold text-orange-600">${scoreRET}</td>
+                    
+                    <td class="p-4 text-xs whitespace-normal leading-relaxed min-w-[200px] bg-blue-50/20 text-slate-700 border-l border-blue-100">
+                        ${harapan}
+                    </td>
+                    <td class="p-4 text-xs whitespace-normal leading-relaxed min-w-[200px] bg-rose-50/20 text-rose-700 border-l border-rose-100 font-medium">
+                        ${perbaikan}
+                    </td>
+                    <td class="p-4 text-xs whitespace-normal leading-relaxed min-w-[200px] bg-emerald-50/20 text-emerald-800 border-l border-emerald-100 italic">
+                        ${shu}
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+            updatePaginationControls();
+        }
+
+        function calcRowAvg(row, start, end) {
+            let sum = 0, count = 0;
+            for(let i=start; i<=end; i++) {
+                let v = parseFloat(row[i]);
+                if(v > 0) { sum+=v; count++; }
+            }
+            return count > 0 ? (sum/count).toFixed(1) : "-";
+        }
+
+        function updatePaginationControls() {
+            const totalPages = Math.ceil(rawData.length / rowsPerPage);
+            document.getElementById('page-indicator').innerText = `Hal ${currentPage} dari ${totalPages || 1}`;
+            document.getElementById('btn-prev').disabled = currentPage === 1;
+            document.getElementById('btn-next').disabled = currentPage >= totalPages;
+        }
+
+        function prevPage() { if(currentPage > 1) { currentPage--; renderTable(); } }
+        function nextPage() { if(currentPage < Math.ceil(rawData.length / rowsPerPage)) { currentPage++; renderTable(); } }
+
+        // --- TEXT ANALYSIS & SUMMARY ---
+        function analyzeTextData(rows) {
+            const extractKeywords = (colIndex) => {
+                const wordCounts = {};
+                rows.forEach(r => {
+                    const text = String(r[colIndex] || "").toLowerCase();
+                    const words = text.replace(/[^a-zA-Z\s]/g, "").split(/\s+/);
+                    words.forEach(w => {
+                        if (w.length > 3 && !stopWords.includes(w)) {
+                            wordCounts[w] = (wordCounts[w] || 0) + 1;
+                        }
+                    });
+                });
+                return Object.entries(wordCounts).sort((a,b) => b[1] - a[1]);
+            };
+
+            const topProducts = extractKeywords(33);
+            const topIssues = extractKeywords(34);
+            const topShu = extractKeywords(35);
+
+            renderList('top-harapan', topProducts, 'blue');
+            renderList('top-keluhan', topIssues, 'rose');
+            renderList('top-shu', topShu, 'emerald');
+            renderExecutiveSummary(rows, topProducts, topIssues, topShu);
+        }
+
+        function renderList(elementId, data, color) {
+            const container = document.getElementById(elementId);
+            if (!container) return;
+            if (data.length === 0) {
+                container.innerHTML = `<p class="text-xs text-slate-400 italic p-2">Belum ada data teks.</p>`;
+                return;
+            }
+            container.innerHTML = data.slice(0, 5).map(([key, count], idx) => `
+                <div class="flex justify-between items-center border-b border-slate-50 pb-2 last:border-0 hover:bg-slate-50 px-2 rounded transition">
+                    <div class="flex items-center gap-2">
+                        <span class="text-[10px] font-bold text-slate-300 w-4">${idx+1}.</span>
+                        <span class="text-xs font-semibold capitalize text-slate-700">${key}</span>
+                    </div>
+                    <span class="text-[10px] font-bold bg-${color}-50 text-${color}-600 px-2 py-0.5 rounded-full">${count}x</span>
+                </div>
             `).join('');
         }
 
-        function updateCharts(rows) {
+        function renderExecutiveSummary(rows, topProds, topIssues, topShu) {
+            let totalScore = 0;
+            rows.forEach(r => totalScore += (parseFloat(r[32]) || 0));
+            const avgTotal = Math.round(totalScore / rows.length);
+            let color = avgTotal >= 80 ? "text-emerald-400" : (avgTotal >= 60 ? "text-amber-400" : "text-rose-400");
+
+            let narrative = `Dari <strong>${rows.length} responden</strong>, kepuasan rata-rata adalah <strong class="${color}">${avgTotal}%</strong>. `;
+            if (topProds.length > 0) narrative += `Anggota mengharapkan <strong>"${topProds[0][0]}"</strong>. `;
+            if (topIssues.length > 0) narrative += `Perbaikan utama fokus pada isu <strong>"${topIssues[0][0]}"</strong>. `;
+            document.getElementById('executive-summary').innerHTML = narrative;
+        }
+
+        function renderKPI(rows) {
+            document.getElementById('kpi-total').innerText = rows.length;
+            let totalScore = 0;
+            rows.forEach(r => totalScore += (parseFloat(r[32]) || 0));
+            const avg = rows.length > 0 ? Math.round(totalScore / rows.length) : 0;
+            document.getElementById('kpi-score').innerText = avg + "%";
+            document.getElementById('kpi-status').innerText = avg >= 80 ? "Sangat Sehat" : "Cukup Sehat";
+        }
+
+        function renderCharts(rows) {
             const getAvg = (start, end) => {
                 let sum = 0, count = 0;
                 rows.forEach(r => {
-                    for (let i = start; i <= end; i++) {
+                    for(let i=start; i<=end; i++) {
                         let v = parseFloat(r[i]);
-                        if (!isNaN(v) && v > 0) { sum += v; count++; }
+                        if(v>0) { sum+=v; count++; }
                     }
                 });
-                return count > 0 ? (sum / count).toFixed(2) : 0;
+                return count > 0 ? (sum/count).toFixed(2) : 0;
             };
-
-            // Mapping index sesuai backend.gs (GCG: 6-11, USP: 12-17, TRV: 18-21, RET: 22-27)
-            const stats = [getAvg(6, 11), getAvg(12, 17), getAvg(18, 21), getAvg(22, 27)];
-
-            const ctx = document.getElementById('adminRadar').getContext('2d');
-            if (radarChart) radarChart.destroy();
+            const radarData = [getAvg(6,11), getAvg(12,17), getAvg(22,25), getAvg(26,31)];
             
-            radarChart = new Chart(ctx, {
+            if(radarChartInst) radarChartInst.destroy();
+            radarChartInst = new Chart(document.getElementById('radarChart'), {
                 type: 'radar',
                 data: {
-                    labels: ['GCG & Tata Kelola', 'Simpan Pinjam', 'Unit Travel', 'Ritel & Adamart'],
+                    labels: ['GCG', 'USP', 'Travel', 'Ritel'],
                     datasets: [{
-                        label: 'Skor Kumulatif',
-                        data: stats,
+                        label: 'Skor Rata-rata',
+                        data: radarData,
                         backgroundColor: 'rgba(16, 185, 129, 0.2)',
-                        borderColor: '#059669',
-                        pointBackgroundColor: '#059669',
-                        borderWidth: 4,
-                        pointRadius: 5
+                        borderColor: '#10b981',
+                        borderWidth: 2
                     }]
                 },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: {
-                        r: {
-                            min: 0, max: 5,
-                            ticks: { display: false, stepSize: 1 },
-                            grid: { color: '#f1f5f9' },
-                            pointLabels: { font: { size: 10, weight: '800' }, color: '#64748b' }
-                        }
-                    },
-                    plugins: { legend: { display: false } }
-                }
+                options: { responsive: true, maintainAspectRatio: false, scales: { r: { min: 0, max: 5 } }, plugins: { legend: {display: false} } }
             });
         }
 
-        function generateActions(rows) {
-            const list = document.getElementById('action-list');
-            const actions = [];
-            
-            const getAvg = (start, end) => {
-                let sum = 0, count = 0;
-                rows.forEach(r => {
-                    for (let i = start; i <= end; i++) {
-                        let v = parseFloat(r[i]);
-                        if (!isNaN(v) && v > 0) { sum += v; count++; }
-                    }
-                });
-                return count > 0 ? sum / count : 5;
-            };
-
-            // Logika berdasarkan Blueprint Riset
-            if (getAvg(6, 11) < 4) actions.push({ icon: "shield-alert", title: "Integritas & Transparansi", desc: "Perkuat keterbukaan laporan keuangan bulanan di portal anggota." });
-            if (getAvg(12, 17) < 3.8) actions.push({ icon: "clock", title: "SLA Pinjaman", desc: "Tinjau birokrasi pencairan USP. Targetkan cair < 24 jam." });
-            if (getAvg(18, 21) < 3.5) actions.push({ icon: "map", title: "Audit Travel", desc: "Banyak pengguna tidak puas dengan fasilitas hotel atau muthowif." });
-            if (getAvg(22, 27) < 3.5) actions.push({ icon: "package", title: "Restock Adamart", desc: "Lakukan audit ketersediaan barang pokok secara mingguan." });
-
-            if (actions.length === 0) {
-                actions.push({ icon: "award", title: "Kinerja Prima", desc: "Pertahankan standar layanan saat ini. Fokus pada inovasi produk baru." });
-            }
-
-            list.innerHTML = actions.map(a => `
-                <div class="bg-slate-800 p-4 rounded-2xl border-l-4 border-emerald-500 hover:bg-slate-700 transition cursor-default">
-                    <div class="flex gap-3">
-                        <i data-lucide="${a.icon}" class="w-5 h-5 text-emerald-400 shrink-0"></i>
-                        <div>
-                            <div class="font-bold text-white text-xs mb-1">${a.title}</div>
-                            <div class="text-slate-400 text-[11px] leading-relaxed">${a.desc}</div>
-                        </div>
-                    </div>
-                </div>
-            `).join('');
-            lucide.createIcons();
+        function exportToExcel() {
+            const headers = ["Timestamp", "NIK", "Nama", "Lokasi", "Masa Anggota", "Unit", "Skor Total", "Harapan Produk", "Perbaikan Utama", "Saran SHU"];
+            const data = [headers, ...rawData.map(r => [r[0], r[1], r[2], r[3], r[4], r[5], r[32], r[33], r[34], r[35]])];
+            const wb = XLSX.utils.book_new();
+            const ws = XLSX.utils.aoa_to_sheet(data);
+            XLSX.utils.book_append_sheet(wb, ws, "Rekap 2025");
+            XLSX.writeFile(wb, "Survey_Kopkar_AKM_2025.xlsx");
         }
     </script>
 </body>
